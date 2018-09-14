@@ -9,5 +9,5 @@ run:
 build:
 	go build -o $(NAME) main.go
 
-deploy:
-	./deploy.yml
+deploy: build
+	scp $(NAME) app1:/tmp/
