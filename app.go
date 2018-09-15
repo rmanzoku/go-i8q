@@ -350,9 +350,11 @@ func fillinAdministrator(next echo.HandlerFunc) echo.HandlerFunc {
 }
 
 func validateRank(rank string) bool {
-	var count int
-	db.QueryRow("SELECT COUNT(*) FROM sheets WHERE `rank` = ?", rank).Scan(&count)
-	return count > 0
+
+	if rank == "S" || rank == "A" || rank == "B" || rank == "C" {
+		return true
+	}
+	return false
 }
 
 type Renderer struct {
@@ -1006,4 +1008,25 @@ func resError(c echo.Context, e string, status int) error {
 		status = 500
 	}
 	return c.JSON(status, map[string]string{"error": e})
+}
+
+func fetchSheetInfo(id int64,data *Sheet){
+	data.ID = id
+	if data.ID >= 501{
+		data.Rank = "C"
+		data.Price = 0
+		data.Num = data.ID - 500
+	}else if data.ID >= 201{
+		data.Rank = "B"
+		data.Price = 1000
+		data.Num = data.ID - 200
+	}else if data.ID >= 51{
+		data.Rank = "A"
+		data.Price = 3000
+		data.Num = data.ID - 50
+	}else{
+		data.Rank = "S"
+		data.Price = 5000
+		data.Num = data.ID
+	}
 }
