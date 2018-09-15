@@ -991,23 +991,6 @@ func fetchSheetInfo(id int64, data *Sheet) {
 }
 
 func reservationPriceInitializer() error {
-	// rows, err := db.Query("SELECT r.id, (e.price + s.price) as pri FROM reservations r INNER JOIN sheets s ON s.id = r.sheet_id INNER JOIN events e ON e.id = r.event_id WHERE r.canceled_at IS NULL")
-	// if err != nil {
-	// 	return err
-	// }
-
-	// defer rows.Close()
-	// for rows.Next() {
-	// 	var rid int
-	// 	var price int
-
-	// 	if err := rows.Scan(&rid, &price); err != nil {
-	// 		return err
-	// 	}
-	// 	if _, err := db.Exec("UPDATE reservations SET price = ? WHERE id = ?", price, rid); err != nil {
-	// 		return err
-	// 	}
-	// }
 
 	if _, err := db.Exec("UPDATE reservations INNER JOIN (SELECT r.id as id, (e.price + s.price) as price FROM reservations r INNER JOIN sheets s ON s.id = r.sheet_id INNER JOIN events e ON e. id = r.event_id) t ON reservations.id=t.id   SET reservations.price=t.price"); err != nil {
 		return err
