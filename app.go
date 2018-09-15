@@ -877,6 +877,10 @@ func main() {
 			return err
 		}
 
+		tx, err := db.Begin()
+		if err != nil {
+			return err
+		}
 		rows, err := db.Query("SELECT r.*, s.rank AS sheet_rank, s.num AS sheet_num, s.price AS sheet_price, e.price AS event_price FROM reservations r INNER JOIN sheets s ON s.id = r.sheet_id INNER JOIN events e ON e.id = r.event_id WHERE r.event_id = ? ORDER BY reserved_at ASC FOR UPDATE", event.ID)
 		if err != nil {
 			return err
@@ -904,6 +908,10 @@ func main() {
 			}
 			reports = append(reports, report)
 		}
+		if err := tx.Commit(); err != nil {
+			return err
+		}
+
 		return renderReportCSV(c, reports)
 	}, adminLoginRequired)
 	e.GET("/admin/api/reports/sales", func(c echo.Context) error {
