@@ -330,6 +330,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	defer store.Close()
 
 	e := echo.New()
 	funcs := template.FuncMap{
