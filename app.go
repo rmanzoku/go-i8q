@@ -260,7 +260,7 @@ func getEvent(eventID, loginUserID int64) (*Event, error) {
 
 
 		val, ok := reservations[sheet.ID]
-		if ok && val.CanceledAt != nil {
+		if ok && val.CanceledAt == nil {
 			// 予約ある
 			sheet.Mine = val.UserID == loginUserID
 			sheet.Reserved = true
