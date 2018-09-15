@@ -16,6 +16,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/boj/redistore"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/gorilla/sessions"
 	"github.com/labstack/echo"
@@ -324,6 +325,12 @@ func main() {
 		log.Fatal(err)
 	}
 
+	redisURI := fmt.Sprintf("%s", os.Getenv("SESSION_REDIS"))
+	store, err := redistore.NewRediStore(10, "tcp", redisURI, "", []byte("secret"))
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	e := echo.New()
 	funcs := template.FuncMap{
 		"encode_json": func(v interface{}) string {
@@ -334,7 +341,7 @@ func main() {
 	e.Renderer = &Renderer{
 		templates: template.Must(template.New("").Delims("[[", "]]").Funcs(funcs).ParseGlob("views/*.tmpl")),
 	}
-	e.Use(session.Middleware(sessions.NewCookieStore([]byte("secret"))))
+	e.Use(session.Middleware(store))
 	e.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{Output: os.Stderr}))
 	e.Static("/", "public")
 	e.GET("/", func(c echo.Context) error {
@@ -954,21 +961,21 @@ func resError(c echo.Context, e string, status int) error {
 	return c.JSON(status, map[string]string{"error": e})
 }
 
-func fetchSheetInfo(id int64,data *Sheet){
+func fetchSheetInfo(id int64, data *Sheet) {
 	data.ID = id
-	if data.ID >= 501{
+	if data.ID >= 501 {
 		data.Rank = "C"
 		data.Price = 0
 		data.Num = data.ID - 500
-	}else if data.ID >= 201{
+	} else if data.ID >= 201 {
 		data.Rank = "B"
 		data.Price = 1000
 		data.Num = data.ID - 200
-	}else if data.ID >= 51{
+	} else if data.ID >= 51 {
 		data.Rank = "A"
 		data.Price = 3000
 		data.Num = data.ID - 50
-	}else{
+	} else {
 		data.Rank = "S"
 		data.Price = 5000
 		data.Num = data.ID
