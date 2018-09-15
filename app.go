@@ -210,7 +210,7 @@ func getEvents(all bool) ([]*Event, error) {
 		events = append(events, &event)
 	}
 	for i, v := range events {
-		event, err := getEvent(v.ID, -1)
+		event, err := simpleGetEventwithRemain(v.ID)
 		if err != nil {
 			return nil, err
 		}
@@ -227,6 +227,34 @@ func simpleGetEvent(eventID int64)(*Event, error){
 	if err := db.QueryRow("SELECT * FROM events WHERE id = ?", eventID).Scan(&event.ID, &event.Title, &event.PublicFg, &event.ClosedFg, &event.Price); err != nil {
 		return nil, err
 	}
+	return &event,nil
+}
+
+func simpleGetEventwithRemain(eventID int64)(*Event, error){
+	var event Event
+	if err := db.QueryRow("SELECT * FROM events WHERE id = ?", eventID).Scan(&event.ID, &event.Title, &event.PublicFg, &event.ClosedFg, &event.Price); err != nil {
+		return nil, err
+	}
+	//return &event,nil
+
+	// sheetIdがKEY. Reservation
+	reservations := map[int64]*Reservation{}
+	rows, err := db.Query("SELECT * FROM reservations WHERE event_id = ? AND canceled_at IS NULL GROUP BY event_id, sheet_id HAVING reserved_at = MIN(reserved_at) FOR UPDATE", event.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	defer rows.Close()
+	var cnt = 0;
+	for rows.Next() {
+		var reservation Reservation
+		if err := rows.Scan(&reservation.ID, &reservation.EventID, &reservation.SheetID, &reservation.UserID, &reservation.Price, &reservation.ReservedAt, &reservation.CanceledAt); err != nil {
+			return nil, err
+		}
+		reservations[reservation.SheetID] = &reservation
+		cnt++
+	}
+	event.Remains = cnt
 	return &event,nil
 }
 
