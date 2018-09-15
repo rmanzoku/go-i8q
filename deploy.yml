@@ -10,6 +10,20 @@
         group: isucon
         mode: 0775
 
+    - copy:
+        src: db/init.sh
+        dest: /home/isucon/torb/db/init.sh
+        owner: isucon
+        group: isucon
+        mode: 0755
+
+    - copy:
+        src: db/schema.sql
+        dest: /home/isucon/torb/db/schema.sql
+        owner: isucon
+        group: isucon
+        mode: 0644
+
     - systemd:
         name: torb.go.service
         state: restarted
