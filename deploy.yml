@@ -13,3 +13,5 @@
     - systemd:
         name: torb.go.service
         state: restarted
+
+    - command: curl localhost:8080/initialize

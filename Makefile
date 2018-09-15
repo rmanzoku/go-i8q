@@ -14,4 +14,4 @@ schema:
 	ssh app40 "./schemalex schema.sql \"mysql://isucon:isucon@tcp(localhost:3306)/torb\""
 
 deploy: build
-	scp $(NAME) app1:/tmp/
+	ansible-playbook deploy.yml
