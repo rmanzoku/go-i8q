@@ -1,4 +1,6 @@
 app
+torb
+.ansible.log
 
 # Binaries for programs and plugins
 *.exe

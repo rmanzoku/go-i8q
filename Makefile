@@ -1,5 +1,5 @@
 PKG=github.com/rmanzoku/go-i8q
-NAME=app
+NAME=torb
 
 .PHONY: run build deploy
 

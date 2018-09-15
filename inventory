@@ -1,0 +1,14 @@
+[app40]
+app40.rororo.xyz
+
+[app37]
+app37.rororo.xyz
+
+[app88]
+app88.rororo.xyz
+
+# [init:vars]
+# ansible_ssh_port=22
+# ansible_ssh_user=isucon
+# ansible_ssh_pass=5ow16dY3bMZFWleX9foao1Mn
+# ansible_sudo_pass=5ow16dY3bMZFWleX9foao1Mn
