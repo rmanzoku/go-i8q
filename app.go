@@ -438,6 +438,8 @@ func main() {
 		defer rows.Close()
 
 		var recentReservations []Reservation
+
+		var totalPrice int64
 		for rows.Next() {
 			var reservation Reservation
 			var sheet Sheet
@@ -458,6 +460,7 @@ func main() {
 			reservation.SheetRank = sheet.Rank
 			reservation.SheetNum = sheet.Num
 			//reservation.Price = price
+			totalPrice += reservation.Price
 			reservation.ReservedAtUnix = reservation.ReservedAt.Unix()
 			if reservation.CanceledAt != nil {
 				reservation.CanceledAtUnix = reservation.CanceledAt.Unix()
@@ -466,11 +469,6 @@ func main() {
 		}
 		if recentReservations == nil {
 			recentReservations = make([]Reservation, 0)
-		}
-
-		var totalPrice int
-		if err := db.QueryRow("SELECT IFNULL(SUM(e.price + s.price), 0) FROM reservations r INNER JOIN sheets s ON s.id = r.sheet_id INNER JOIN events e ON e.id = r.event_id WHERE r.user_id = ? AND r.canceled_at IS NULL", user.ID).Scan(&totalPrice); err != nil {
-			return err
 		}
 
 		rows, err = db.Query("SELECT event_id FROM reservations WHERE user_id = ? GROUP BY event_id ORDER BY MAX(IFNULL(canceled_at, reserved_at)) DESC LIMIT 5", user.ID)
