@@ -447,16 +447,17 @@ func main() {
 				return err
 			}
 
-			event, err := getEvent(reservation.EventID, -1)
-			if err != nil {
-				return err
-			}
+			//event, err := getEvent(reservation.EventID, -1)
+			//if err != nil {
+			//	return err
+			//}
 			//price := event.Sheets[sheet.Rank].Price
+			var event = Event{}
 			event.Sheets = nil
 			event.Total = 0
 			event.Remains = 0
 
-			reservation.Event = event
+			reservation.Event = &event
 			reservation.SheetRank = sheet.Rank
 			reservation.SheetNum = sheet.Num
 			//reservation.Price = price
