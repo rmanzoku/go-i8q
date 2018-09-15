@@ -244,7 +244,7 @@ func getEvent(eventID, loginUserID int64) (*Event, error) {
 	defer rows.Close()
 	for rows.Next() {
 		var reservation Reservation
-		if err := rows.Scan(&reservation.ID, &reservation.EventID, &reservation.SheetID, &reservation.UserID, &reservation.ReservedAt, &reservation.CanceledAt); err != nil {
+		if err := rows.Scan(&reservation.ID, &reservation.EventID, &reservation.SheetID, &reservation.UserID, &reservation.Price, &reservation.ReservedAt, &reservation.CanceledAt); err != nil {
 			return nil, err
 		}
 		reservations[reservation.SheetID] = &reservation
