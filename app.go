@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/labstack/echo-contrib/session"
 	"html/template"
 	"io"
 	"log"
@@ -16,6 +15,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/labstack/echo-contrib/session"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/gorilla/sessions"
@@ -367,6 +368,10 @@ func main() {
 		err := cmd.Run()
 		if err != nil {
 			return nil
+		}
+		err = reservationPriceInitializer()
+		if err != nil {
+			return err
 		}
 
 		return c.NoContent(204)
@@ -982,4 +987,26 @@ func fetchSheetInfo(id int64, data *Sheet) {
 		data.Price = 5000
 		data.Num = data.ID
 	}
+}
+
+func reservationPriceInitializer() error {
+	rows, err := db.Query("SELECT r.id, (e.price + s.price) as pri FROM reservations r INNER JOIN sheets s ON s.id = r.sheet_id INNER JOIN events e ON e.id = r.event_id WHERE r.canceled_at IS NULL")
+	if err != nil {
+		return err
+	}
+
+	defer rows.Close()
+	for rows.Next() {
+		var rid int
+		var price int
+
+		if err := rows.Scan(&rid, &price); err != nil {
+			return err
+		}
+		if _, err := db.Exec("UPDATE reservations SET price = ? WHERE id = ?", price, rid); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
