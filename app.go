@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/labstack/echo-contrib/session"
 	"html/template"
 	"io"
 	"log"
@@ -16,6 +15,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/labstack/echo-contrib/session"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/gorilla/sessions"
@@ -243,7 +244,7 @@ func getEvent(eventID, loginUserID int64) (*Event, error) {
 	defer rows.Close()
 	for rows.Next() {
 		var reservation Reservation
-		if err := rows.Scan(&reservation.ID, &reservation.EventID, &reservation.SheetID, &reservation.UserID, &reservation.ReservedAt, &reservation.CanceledAt); err != nil {
+		if err := rows.Scan(&reservation.ID, &reservation.EventID, &reservation.SheetID, &reservation.UserID, &reservation.Price, &reservation.ReservedAt, &reservation.CanceledAt); err != nil {
 			return nil, err
 		}
 		reservations[reservation.SheetID] = &reservation
@@ -368,6 +369,10 @@ func main() {
 		if err != nil {
 			return nil
 		}
+		err = reservationPriceInitializer()
+		if err != nil {
+			return err
+		}
 
 		return c.NoContent(204)
 	})
@@ -436,7 +441,7 @@ func main() {
 		for rows.Next() {
 			var reservation Reservation
 			var sheet Sheet
-			if err := rows.Scan(&reservation.ID, &reservation.EventID, &reservation.SheetID, &reservation.UserID, &reservation.ReservedAt, &reservation.CanceledAt, &sheet.Rank, &sheet.Num); err != nil {
+			if err := rows.Scan(&reservation.ID, &reservation.EventID, &reservation.SheetID, &reservation.UserID, &reservation.Price, &reservation.ReservedAt, &reservation.CanceledAt, &sheet.Rank, &sheet.Num); err != nil {
 				return err
 			}
 
@@ -444,7 +449,7 @@ func main() {
 			if err != nil {
 				return err
 			}
-			price := event.Sheets[sheet.Rank].Price
+			//price := event.Sheets[sheet.Rank].Price
 			event.Sheets = nil
 			event.Total = 0
 			event.Remains = 0
@@ -452,7 +457,7 @@ func main() {
 			reservation.Event = event
 			reservation.SheetRank = sheet.Rank
 			reservation.SheetNum = sheet.Num
-			reservation.Price = price
+			//reservation.Price = price
 			reservation.ReservedAtUnix = reservation.ReservedAt.Unix()
 			if reservation.CanceledAt != nil {
 				reservation.CanceledAtUnix = reservation.CanceledAt.Unix()
@@ -615,7 +620,8 @@ func main() {
 				return err
 			}
 
-			res, err := tx.Exec("INSERT INTO reservations (event_id, sheet_id, user_id, reserved_at) VALUES (?, ?, ?, ?)", event.ID, sheet.ID, user.ID, time.Now().UTC().Format("2006-01-02 15:04:05.000000"))
+			var price = event.Price + sheet.Price
+			res, err := tx.Exec("INSERT INTO reservations (event_id, sheet_id, user_id, price, reserved_at) VALUES (?, ?, ?, ?, ?)", event.ID, sheet.ID, user.ID, price, time.Now().UTC().Format("2006-01-02 15:04:05.000000"))
 			if err != nil {
 				tx.Rollback()
 				log.Println("re-try: rollback by", err)
@@ -686,7 +692,7 @@ func main() {
 		}
 
 		var reservation Reservation
-		if err := tx.QueryRow("SELECT * FROM reservations WHERE event_id = ? AND sheet_id = ? AND canceled_at IS NULL GROUP BY event_id HAVING reserved_at = MIN(reserved_at) FOR UPDATE", event.ID, sheet.ID).Scan(&reservation.ID, &reservation.EventID, &reservation.SheetID, &reservation.UserID, &reservation.ReservedAt, &reservation.CanceledAt); err != nil {
+		if err := tx.QueryRow("SELECT * FROM reservations WHERE event_id = ? AND sheet_id = ? AND canceled_at IS NULL GROUP BY event_id HAVING reserved_at = MIN(reserved_at) FOR UPDATE", event.ID, sheet.ID).Scan(&reservation.ID, &reservation.EventID, &reservation.SheetID, &reservation.UserID, &reservation.Price, &reservation.ReservedAt, &reservation.CanceledAt); err != nil {
 			tx.Rollback()
 			if err == sql.ErrNoRows {
 				return resError(c, "not_reserved", 400)
@@ -890,7 +896,7 @@ func main() {
 		for rows.Next() {
 			var reservation Reservation
 			var sheet Sheet
-			if err := rows.Scan(&reservation.ID, &reservation.EventID, &reservation.SheetID, &reservation.UserID, &reservation.ReservedAt, &reservation.CanceledAt, &sheet.Rank, &sheet.Num, &sheet.Price, &event.Price); err != nil {
+			if err := rows.Scan(&reservation.ID, &reservation.EventID, &reservation.SheetID, &reservation.UserID, &reservation.Price, &reservation.ReservedAt, &reservation.CanceledAt, &sheet.Rank, &sheet.Num, &sheet.Price, &event.Price); err != nil {
 				return err
 			}
 			report := Report{
@@ -921,7 +927,7 @@ func main() {
 			var reservation Reservation
 			var sheet Sheet
 			var event Event
-			if err := rows.Scan(&reservation.ID, &reservation.EventID, &reservation.SheetID, &reservation.UserID, &reservation.ReservedAt, &reservation.CanceledAt, &sheet.Rank, &sheet.Num, &sheet.Price, &event.ID, &event.Price); err != nil {
+			if err := rows.Scan(&reservation.ID, &reservation.EventID, &reservation.SheetID, &reservation.UserID, &reservation.Price, &reservation.ReservedAt, &reservation.CanceledAt, &sheet.Rank, &sheet.Num, &sheet.Price, &event.ID, &event.Price); err != nil {
 				return err
 			}
 			report := Report{
@@ -999,4 +1005,13 @@ func fetchSheetInfo(id int64, data *Sheet) {
 		data.Price = 5000
 		data.Num = data.ID
 	}
+}
+
+func reservationPriceInitializer() error {
+
+	if _, err := db.Exec("UPDATE reservations INNER JOIN (SELECT r.id as id, (e.price + s.price) as price FROM reservations r INNER JOIN sheets s ON s.id = r.sheet_id INNER JOIN events e ON e. id = r.event_id) t ON reservations.id=t.id   SET reservations.price=t.price"); err != nil {
+		return err
+	}
+
+	return nil
 }
