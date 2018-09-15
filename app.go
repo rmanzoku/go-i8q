@@ -222,6 +222,14 @@ func getEvents(all bool) ([]*Event, error) {
 	return events, nil
 }
 
+func simpleGetEvent(eventID int64)(*Event, error){
+	var event Event
+	if err := db.QueryRow("SELECT * FROM events WHERE id = ?", eventID).Scan(&event.ID, &event.Title, &event.PublicFg, &event.ClosedFg, &event.Price); err != nil {
+		return nil, err
+	}
+	return &event,nil
+}
+
 func getEvent(eventID, loginUserID int64) (*Event, error) {
 	var event Event
 	if err := db.QueryRow("SELECT * FROM events WHERE id = ?", eventID).Scan(&event.ID, &event.Title, &event.PublicFg, &event.ClosedFg, &event.Price); err != nil {
@@ -444,8 +452,7 @@ func main() {
 			if err := rows.Scan(&reservation.ID, &reservation.EventID, &reservation.SheetID, &reservation.UserID, &reservation.Price, &reservation.ReservedAt, &reservation.CanceledAt, &sheet.Rank, &sheet.Num); err != nil {
 				return err
 			}
-
-			event, err := getEvent(reservation.EventID, -1)
+			event, err := simpleGetEvent(reservation.EventID)
 			if err != nil {
 				return err
 			}
