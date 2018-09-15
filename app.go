@@ -589,9 +589,8 @@ func main() {
 
 		//event, err := getEvent(eventID, user.ID)
 		var event Event
-		if err := db.QueryRow("SELECT * FROM events WHERE id = ? FOR UPDATE", eventID).Scan(&event.ID, &event.Title, &event.PublicFg, &event.ClosedFg, &event.Price); err != nil {
-			return err
-		}
+		err = db.QueryRow("SELECT * FROM events WHERE id = ?", eventID).Scan(&event.ID, &event.Title, &event.PublicFg, &event.ClosedFg, &event.Price)
+
 		if err != nil {
 			if err == sql.ErrNoRows {
 				return resError(c, "invalid_event", 404)
@@ -662,9 +661,8 @@ func main() {
 
 		//event, err := getEvent(eventID, user.ID)
 		var event Event
-		if err := db.QueryRow("SELECT * FROM events WHERE id = ? FOR UPDATE", eventID).Scan(&event.ID, &event.Title, &event.PublicFg, &event.ClosedFg, &event.Price); err != nil {
-			return err
-		}
+		err = db.QueryRow("SELECT * FROM events WHERE id = ?", eventID).Scan(&event.ID, &event.Title, &event.PublicFg, &event.ClosedFg, &event.Price)
+
 		if err != nil {
 			if err == sql.ErrNoRows {
 				return resError(c, "invalid_event", 404)
