@@ -858,17 +858,8 @@ func main() {
 			return resError(c, "not_found", 404)
 		}
 
-		tx, err := db.Begin()
-		if err != nil {
-			return err
-		}
-
 		event, err := getEvent(eventID, -1)
 		if err != nil {
-			return err
-		}
-
-		if err := tx.Commit(); err != nil {
 			return err
 		}
 
