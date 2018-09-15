@@ -589,7 +589,7 @@ func main() {
 
 		//event, err := getEvent(eventID, user.ID)
 		var event Event
-		err = db.QueryRow("SELECT * FROM events WHERE id = ?", eventID).Scan(&event.ID, &event.Title, &event.PublicFg, &event.ClosedFg, &event.Price)
+		err = db.QueryRow("SELECT * FROM events WHERE id = ? FOR UPDATE", eventID).Scan(&event.ID, &event.Title, &event.PublicFg, &event.ClosedFg, &event.Price)
 
 		if err != nil {
 			if err == sql.ErrNoRows {
@@ -661,7 +661,7 @@ func main() {
 
 		//event, err := getEvent(eventID, user.ID)
 		var event Event
-		err = db.QueryRow("SELECT * FROM events WHERE id = ?", eventID).Scan(&event.ID, &event.Title, &event.PublicFg, &event.ClosedFg, &event.Price)
+		err = db.QueryRow("SELECT * FROM events WHERE id = ? FOR UPDATE", eventID).Scan(&event.ID, &event.Title, &event.PublicFg, &event.ClosedFg, &event.Price)
 
 		if err != nil {
 			if err == sql.ErrNoRows {
@@ -833,9 +833,8 @@ func main() {
 
 		//event, err := getEvent(eventID, -1)
 		var event Event
-		if err := db.QueryRow("SELECT * FROM events WHERE id = ? FOR UPDATE", eventID).Scan(&event.ID, &event.Title, &event.PublicFg, &event.ClosedFg, &event.Price); err != nil {
-			return err
-		}
+		err = db.QueryRow("SELECT * FROM events WHERE id = ? FOR UPDATE", eventID).Scan(&event.ID, &event.Title, &event.PublicFg, &event.ClosedFg, &event.Price)
+
 		if err != nil {
 			if err == sql.ErrNoRows {
 				return resError(c, "not_found", 404)
@@ -877,10 +876,6 @@ func main() {
 		//event, err := getEvent(eventID, -1)
 		var event Event
 		if err := db.QueryRow("SELECT * FROM events WHERE id = ? FOR UPDATE", eventID).Scan(&event.ID, &event.Title, &event.PublicFg, &event.ClosedFg, &event.Price); err != nil {
-			return err
-		}
-
-		if err != nil {
 			return err
 		}
 
