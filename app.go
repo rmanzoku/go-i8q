@@ -235,7 +235,7 @@ func getEvent(eventID, loginUserID int64) (*Event, error) {
 
 	// sheetIdがKEY. Reservation
 	reservations := map[int64]*Reservation{}
-	rows, err := db.Query("SELECT * FROM reservations WHERE event_id = ?", event.ID)
+	rows, err := db.Query("SELECT * FROM reservations WHERE event_id = ? AND canceled_at IS NULL GROUP BY event_id, sheet_id HAVING reserved_at = MIN(reserved_at)", event.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -260,7 +260,7 @@ func getEvent(eventID, loginUserID int64) (*Event, error) {
 
 
 		val, ok := reservations[sheet.ID]
-		if ok && val.CanceledAt == nil {
+		if ok {
 			// 予約ある
 			sheet.Mine = val.UserID == loginUserID
 			sheet.Reserved = true
