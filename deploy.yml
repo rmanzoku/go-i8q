@@ -36,3 +36,4 @@
         state: restarted
 
     - command: curl localhost:8080/initialize
+      run_once: yes
